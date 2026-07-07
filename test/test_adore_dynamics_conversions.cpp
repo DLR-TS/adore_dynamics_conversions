@@ -451,8 +451,8 @@ TEST( AdoreDynamicsConversions, traffic_participant_ros_to_cpp_to_ros_full )
   msg.tracking_id = 42u;
 
   // goal point present (non-sentinel)
-  msg.goal_point.x = 5.0;
-  msg.goal_point.y = -3.0;
+  msg.goal_point[0].x = 5.0;
+  msg.goal_point[0].y = -3.0;
 
   // predicted trajectory: two states
   adore_ros2_msgs::msg::VehicleStateDynamic t_state1 = msg.motion_state;
@@ -461,12 +461,12 @@ TEST( AdoreDynamicsConversions, traffic_participant_ros_to_cpp_to_ros_full )
   t_state2.y                                         = 20.0;
   t_state2.time                                      = 11.0;
 
-  msg.predicted_trajectory.states.push_back( t_state1 );
-  msg.predicted_trajectory.states.push_back( t_state2 );
-  msg.predicted_trajectory.label = "predicted";
+  msg.predicted_trajectory[0].states.push_back( t_state1 );
+  msg.predicted_trajectory[0].states.push_back( t_state2 );
+  msg.predicted_trajectory[0].label = "predicted";
 
   // route present (center_points non-empty)
-  msg.route = make_sample_route_msg_for_participant();
+  msg.route[0] = make_sample_route_msg_for_participant();
 
   auto participant_cpp = conv::to_cpp_type( msg );
   auto msg_back        = conv::to_ros_msg( participant_cpp );
@@ -484,19 +484,19 @@ TEST( AdoreDynamicsConversions, traffic_participant_ros_to_cpp_to_ros_full )
 
   // goal point optional
   ASSERT_TRUE( participant_cpp.goal_point.has_value() );
-  EXPECT_NEAR( participant_cpp.goal_point->x, msg.goal_point.x, k_eps );
-  EXPECT_NEAR( participant_cpp.goal_point->y, msg.goal_point.y, k_eps );
-  EXPECT_NEAR( msg_back.goal_point.x, msg.goal_point.x, k_eps );
-  EXPECT_NEAR( msg_back.goal_point.y, msg.goal_point.y, k_eps );
+  EXPECT_NEAR( participant_cpp.goal_point.value().x, msg.goal_point[0].x, k_eps );
+  EXPECT_NEAR( participant_cpp.goal_point.value().y, msg.goal_point[0].y, k_eps );
+  EXPECT_NEAR( msg_back.goal_point[0].x, msg.goal_point[0].x, k_eps );
+  EXPECT_NEAR( msg_back.goal_point[0].y, msg.goal_point[0].y, k_eps );
 
   // predicted trajectory optional
   ASSERT_TRUE( participant_cpp.trajectory.has_value() );
-  EXPECT_EQ( participant_cpp.trajectory->states.size(), msg.predicted_trajectory.states.size() );
-  EXPECT_EQ( msg_back.predicted_trajectory.states.size(), msg.predicted_trajectory.states.size() );
+  EXPECT_EQ( participant_cpp.trajectory.value().states.size(), msg.predicted_trajectory[0].states.size() );
+  EXPECT_EQ( msg_back.predicted_trajectory[0].states.size(), msg.predicted_trajectory[0].states.size() );
 
   // route optional
   ASSERT_TRUE( participant_cpp.route.has_value() );
-  EXPECT_FALSE( msg_back.route.center_points.empty() );
+  EXPECT_FALSE( msg_back.route[0].center_points.empty() );
 }
 
 TEST( AdoreDynamicsConversions, traffic_participant_sentinels_to_optionals )
@@ -507,8 +507,8 @@ TEST( AdoreDynamicsConversions, traffic_participant_sentinels_to_optionals )
   msg.v2x_station_id = 0u;
 
   // goal_point (0,0) sentinel
-  msg.goal_point.x = 0.0;
-  msg.goal_point.y = 0.0;
+  msg.goal_point[0].x = 0.0;
+  msg.goal_point[0].y = 0.0;
 
   // empty predicted_trajectory, empty route
   // (all defaults)
@@ -523,10 +523,10 @@ TEST( AdoreDynamicsConversions, traffic_participant_sentinels_to_optionals )
   auto msg_back = conv::to_ros_msg( participant_cpp );
 
   EXPECT_EQ( msg_back.v2x_station_id, 0u );
-  EXPECT_NEAR( msg_back.goal_point.x, 0.0, k_eps );
-  EXPECT_NEAR( msg_back.goal_point.y, 0.0, k_eps );
-  EXPECT_TRUE( msg_back.predicted_trajectory.states.empty() );
-  EXPECT_TRUE( msg_back.route.center_points.empty() );
+  EXPECT_NEAR( msg_back.goal_point[0].x, 0.0, k_eps );
+  EXPECT_NEAR( msg_back.goal_point[0].y, 0.0, k_eps );
+  EXPECT_TRUE( msg_back.predicted_trajectory[0].states.empty() );
+  EXPECT_TRUE( msg_back.route[0].center_points.empty() );
 }
 
 TEST( AdoreDynamicsConversions, traffic_participant_set_round_trip )

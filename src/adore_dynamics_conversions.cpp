@@ -12,6 +12,7 @@
  ********************************************************************************/
 
 #include "adore_dynamics_conversions.hpp"
+#include "adore_ros2_msgs/msg/point2d.hpp"
 
 namespace adore
 {
@@ -270,26 +271,34 @@ to_ros_msg( const TrafficParticipant& participant )
   // Optional goal point
   if( participant.goal_point )
   {
-    msg.goal_point.x = participant.goal_point->x;
-    msg.goal_point.y = participant.goal_point->y;
+    geometry_msgs::msg::Point goal_point;
+    goal_point.x = participant.goal_point->x;
+    goal_point.y = participant.goal_point->y;
+
+    msg.goal_point.push_back(goal_point);
   }
 
   // Optional trajectory
   if( participant.trajectory )
   {
-    msg.predicted_trajectory = to_ros_msg( *participant.trajectory );
+    msg.predicted_trajectory.push_back( to_ros_msg( *participant.trajectory ) );
   }
 
   // Optional trajectory
   if( participant.mrm_trajectory )
   {
-    msg.mrm_trajectory = to_ros_msg( *participant.mrm_trajectory );
+    msg.mrm_trajectory.push_back( to_ros_msg( *participant.mrm_trajectory ));
   }
 
   // Optional route
   if( participant.route )
   {
-    msg.route = map::conversions::to_ros_msg( *participant.route );
+    msg.route.push_back( map::conversions::to_ros_msg( *participant.route ) );
+  }
+
+  if ( participant.maneuver_advice )
+  {
+    msg.maneuver_advice.push_back( to_ros_msg( *participant.maneuver_advice) );
   }
 
   return msg;
@@ -315,30 +324,35 @@ to_cpp_type( const adore_ros2_msgs::msg::TrafficParticipant& msg )
   }
 
   // Optional goal point
-  if( msg.goal_point.x != 0.0 || msg.goal_point.y != 0.0 )
+  if( !msg.goal_point.empty() )
   {
     adore::math::Point2d goal_point;
-    goal_point.x           = msg.goal_point.x;
-    goal_point.y           = msg.goal_point.y;
+    goal_point.x           = msg.goal_point[0].x;
+    goal_point.y           = msg.goal_point[0].y;
     participant.goal_point = goal_point;
   }
 
   // Optional trajectory
-  if( !msg.predicted_trajectory.states.empty() )
+  if( !msg.predicted_trajectory.empty() )
   {
-    participant.trajectory = to_cpp_type( msg.predicted_trajectory );
+    participant.trajectory = to_cpp_type( msg.predicted_trajectory[0] );
   }
 
   // mrm trajectory
-  if( !msg.mrm_trajectory.states.empty() )
+  if( !msg.mrm_trajectory.empty() )
   {
-    participant.mrm_trajectory = to_cpp_type( msg.mrm_trajectory );
+    participant.mrm_trajectory = to_cpp_type( msg.mrm_trajectory[0] );
+  }
+
+  if ( !msg.maneuver_advice.empty() )
+  {
+    participant.maneuver_advice = to_cpp_type( msg.maneuver_advice[0] );
   }
 
   // Optional route
-  if( !msg.route.center_points.empty() )
+  if( !msg.route.empty() )
   {
-    participant.route = adore::map::conversions::to_cpp_type( msg.route );
+    participant.route = adore::map::conversions::to_cpp_type( msg.route[0] );
   }
 
   participant.id = msg.tracking_id;
@@ -496,6 +510,20 @@ to_cpp_type( const adore_ros2_msgs::msg::PhysicalVehicleParameters& msg )
 
   return cpp;
 }
+
+ManeuverAdvice to_cpp_type( const adore_ros2_msgs::msg::ManeuverAdvice& msg )
+{
+  return static_cast<ManeuverAdvice>( msg.advice );
+}
+
+adore_ros2_msgs::msg::ManeuverAdvice to_ros_msg( const ManeuverAdvice& advice )
+{
+  adore_ros2_msgs::msg::ManeuverAdvice msg;
+  msg.advice = static_cast<uint8_t>( advice );
+
+  return msg;
+}
+
 } // namespace conversions
 } // namespace dynamics
 } // namespace adore
